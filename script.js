@@ -13,6 +13,11 @@
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
   const cover = document.querySelector('.cover');
   const photoFrame = document.querySelector('.cover-viewport');
+  const coverPhotos = Array.from(document.querySelectorAll('.cover-photo'));
+  const heroMain = document.querySelector('.hero-main');
+  let coverStartY = 0;
+  let activePhotoIndex = Math.max(0, coverPhotos.findIndex(photo => photo.classList.contains('is-active')));
+  let carouselTimer = 0;
   let observer;
   let frame = 0;
   const animations = new Set();
@@ -22,11 +27,26 @@
     if (preference.matches || !cover || !photoFrame) return;
     const rect = cover.getBoundingClientRect();
     if (rect.bottom < 0 || rect.top > window.innerHeight) return;
-    const progress = Math.max(0, Math.min(1, -rect.top / rect.height));
-    // A restrained parallax: enough movement to feel alive, without displacing the cover.
-    cover.style.setProperty('--photo-shift', `${progress * Math.min(photoFrame.clientWidth * 0.02, 34)}px`);
-    cover.style.setProperty('--photo-scale', String(1.025 + progress * 0.045));
-    cover.style.setProperty('--title-shift', `${progress * 54}px`);
+    // Measure from the cover's actual document position so movement begins as
+    // soon as the cover enters the scroll, not only after it leaves the viewport.
+    const travel = Math.max(1, rect.height * 1.05);
+    const scrollTop = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+    const progress = Math.max(0, Math.min(1, (scrollTop - coverStartY) / travel));
+    const photoShift = progress * Math.min(photoFrame.clientWidth * 0.09, 140);
+    const photoScale = 1.035 + progress * 0.12;
+    const photoRotate = progress * -1.1;
+    const titleShift = progress * -86;
+    // Set the transform directly as well as through variables. This keeps the
+    // motion reliable in browsers that handle custom-property transforms poorly.
+    coverPhotos.forEach((photo, index) => {
+      if (index === activePhotoIndex) {
+        photo.style.transform = `translate3d(0, ${photoShift}px, 0) scale(${photoScale}) rotate(${photoRotate}deg)`;
+      } else {
+        photo.style.removeProperty('transform');
+      }
+    });
+    if (heroMain) heroMain.style.transform = `translate3d(0, ${titleShift}px, 0)`;
+    cover.style.setProperty('--scroll-progress', String(progress));
   }
 
   function queueCoverUpdate() {
@@ -40,9 +60,27 @@
     cancelAnimationFrame(frame);
     frame = 0;
     if (cover) {
-      ['--photo-shift', '--photo-scale', '--title-shift'].forEach(name => cover.style.removeProperty(name));
+      ['--photo-shift', '--photo-scale', '--photo-rotate', '--title-shift'].forEach(name => cover.style.removeProperty(name));
     }
+    coverPhotos.forEach(photo => photo.style.removeProperty('transform'));
+    if (heroMain) heroMain.style.removeProperty('transform');
     if (preference.matches) return;
+
+    if (cover) coverStartY = window.scrollY + cover.getBoundingClientRect().top;
+
+    if (carouselTimer) window.clearInterval(carouselTimer);
+    carouselTimer = 0;
+    if (coverPhotos.length > 1) {
+      carouselTimer = window.setInterval(() => {
+        activePhotoIndex = (activePhotoIndex + 1) % coverPhotos.length;
+        coverPhotos.forEach((photo, index) => {
+          const active = index === activePhotoIndex;
+          photo.classList.toggle('is-active', active);
+          photo.setAttribute('aria-hidden', active ? 'false' : 'true');
+        });
+        queueCoverUpdate();
+      }, 5200);
+    }
 
     if ('IntersectionObserver' in window && 'animate' in Element.prototype) {
       observer = new IntersectionObserver(entries => {
@@ -66,7 +104,10 @@
   }
 
   window.addEventListener('scroll', queueCoverUpdate, { passive: true });
-  window.addEventListener('resize', queueCoverUpdate, { passive: true });
+  window.addEventListener('resize', () => {
+    if (cover) coverStartY = window.scrollY + cover.getBoundingClientRect().top;
+    queueCoverUpdate();
+  }, { passive: true });
   preference.addEventListener('change', configureMotion);
   configureMotion();
 })();
