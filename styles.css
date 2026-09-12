@@ -168,16 +168,17 @@ footer.section-wrap { padding-top: 32px; padding-bottom: 32px; display: flex; ju
   .price { font-size: 2.4rem; }
 }
 @media (max-width: 720px) {
-  .masthead { padding: 14px 5%; gap: 12px; }
-  .brand { font-size: .875rem; gap: 9px; }
-  .brand-logos { gap: 9px; padding-right: 11px; }
-  .team-logo { width: 60px; height: 60px; }
-  .university-logo { width: 44px; height: 44px; }
-  .brand-sub { font-size: .75rem; }
-  nav { gap: 0; }
-  nav > a:not(.nav-partner) { display: none; }
-  .nav-partner { font-size: .875rem; padding: 9px 11px; }
-  .nav-partner span { display: none; }
+  .masthead { display: grid; grid-template-columns: minmax(0, 1fr); padding: 14px 5%; gap: 12px; }
+  .brand { min-width: 0; font-size: .875rem; gap: 9px; }
+  .brand > span:last-child { white-space: nowrap; letter-spacing: .05em; }
+  .brand-logos { gap: 8px; padding-right: 10px; }
+  .team-logo { width: 52px; height: 52px; }
+  .university-logo { width: 38px; height: 38px; }
+  .brand-sub { font-size: .7rem; letter-spacing: .2em; margin-top: 4px; }
+  nav { grid-column: 1; justify-content: space-between; gap: 6px; width: 100%; overflow-x: auto; padding-top: 10px; border-top: 1px solid var(--line); }
+  nav > a:not(.nav-partner) { display: inline-flex; align-items: center; padding: 7px 8px; font-size: .75rem; white-space: nowrap; }
+  nav .nav-partner { background: var(--red); border-color: var(--red); color: white; font-size: .75rem; padding: 8px 10px; white-space: nowrap; }
+  .nav-partner span { display: inline; margin-left: 6px; }
   .hero-main { position: static; padding: 26px 6%; background: var(--navy); order: -1; }
   .cover { display: flex; flex-direction: column; }
   h1 { font-size: clamp(2.9rem, 12vw, 5rem); margin-top: 12px; }
@@ -202,9 +203,16 @@ footer.section-wrap { padding-top: 32px; padding-bottom: 32px; display: flex; ju
   .package-summary { min-height: 0; }
   footer.section-wrap { flex-direction: column; gap: 24px; }
 }
+
+@media (hover: none) {
+  .result:active, .package:active { transform: scale(.985); box-shadow: 0 10px 22px #17264d25; }
+  .activity-list article:active { transform: translateX(5px); border-top-color: var(--red); }
+  .opponents li:active { transform: scale(1.03); border-color: var(--red); }
+  .button:active, .nav-partner:active { transform: scale(.97); }
+}
 @media (max-width: 380px) {
   .masthead nav { width: 100%; }
-  .nav-partner { text-align: center; width: 100%; }
+  .masthead nav .nav-partner { text-align: left; width: auto; }
   .results { grid-template-columns: 1fr; }
   .result { border-right: 0; border-bottom: 1px solid var(--line); }
   .result:last-child { border-bottom: 0; }
